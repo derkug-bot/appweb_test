@@ -8,11 +8,12 @@
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background-color: #f4f4f4; }
-    .strong { background-color: #b3ffb3; }
-    .weak { background-color: #ffcccc; }
+    .strong { background-color: #b3ffb3; } /* strong RSSI */
+    .weak { background-color: #ffcccc; }   /* weak RSSI */
   </style>
 </head>
 <body>
+
 <h2>ESP32 Sensor Dashboard</h2>
 <table id="dashboard">
   <thead>
@@ -31,6 +32,7 @@
 </table>
 
 <script>
+// ✅ Use your actual Apps Script /exec URL
 const DATA_URL = "https://script.google.com/macros/s/AKfycbwJcyPYWUSdqBmjeolqufbsv8uuRC4CPAZrPMe6Ps4v3GWmlGpwa4DRx6ovFnzpFd0Vow/exec"; // replace with your Apps Script /exec URL
 
 async function loadDashboard() {
@@ -39,6 +41,7 @@ async function loadDashboard() {
     const data = await response.json();
     const tbody = document.querySelector('#dashboard tbody');
     tbody.innerHTML = '';
+
     data.forEach(row => {
       const tr = document.createElement('tr');
       Object.keys(row).forEach(key => {
@@ -46,18 +49,25 @@ async function loadDashboard() {
         td.textContent = row[key];
         tr.appendChild(td);
       });
+
+      // Color-code RSSI: strong > -60, weak < -75
       const rssi = parseInt(row.RSSI);
-      if (rssi > -60) tr.cells[6].className = 'strong';
-      else if (rssi < -75) tr.cells[6].className = 'weak';
+      if (!isNaN(rssi)) {
+        if (rssi > -60) tr.cells[6].className = 'strong';
+        else if (rssi < -75) tr.cells[6].className = 'weak';
+      }
+
       tbody.appendChild(tr);
     });
-  } catch(err) {
+  } catch (err) {
     console.error("Error loading dashboard:", err);
   }
 }
 
+// Initial load and refresh every 10s
 loadDashboard();
 setInterval(loadDashboard, 10000);
 </script>
+
 </body>
 </html>
