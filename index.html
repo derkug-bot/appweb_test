@@ -9,13 +9,10 @@
   table { width: 100%; border-collapse: collapse; margin-top: 20px; }
   th, td { padding: 8px 12px; border: 1px solid #ccc; text-align: center; }
   th { background-color: #333; color: #fff; }
-
-  /* RSSI colors */
   .rssi-strong { background-color: #4caf50; color: #fff; }
   .rssi-medium { background-color: #ffeb3b; }
   .rssi-weak { background-color: #f44336; color: #fff; }
-
-  button { padding: 5px 10px; margin: 2px; font-size: 14px; cursor: pointer; }
+  button { padding: 4px 8px; margin: 0 2px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -48,20 +45,17 @@ function getRssiClass(rssi) {
   return "rssi-weak";
 }
 
-// --- Send LED command ---
-function setLed(deviceId, ledValue) {
-  const url = `${DATA_URL}?ledDevice=${deviceId}&led=${ledValue}`;
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      if(data.status === "ok") {
-        alert(`LED set to ${ledValue} for device ${deviceId}`);
-        fetchData(); // refresh table to show new LED state
-      } else {
-        alert(`Error: ${data.error || data.message}`);
-      }
-    })
-    .catch(err => alert('Fetch error: ' + err));
+// Send LED command to Apps Script
+async function setLed(device, state) {
+  const url = `${DATA_URL}?ledDevice=${device}&led=${state ? 1 : 0}`;
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    console.log(`LED set for ${device}:`, json);
+    fetchData(); // refresh table after command
+  } catch (err) {
+    console.error("Error setting LED:", err);
+  }
 }
 
 async function fetchData() {
@@ -73,8 +67,7 @@ async function fetchData() {
 
     data.forEach(row => {
       const tr = document.createElement("tr");
-      const rssiClass = getRssiClass(row.RSSI);
-      
+
       tr.innerHTML = `
         <td>${new Date(row.Timestamp).toLocaleString()}</td>
         <td>${row.Device}</td>
@@ -82,11 +75,11 @@ async function fetchData() {
         <td>${row.A2}</td>
         <td>${row.A3}</td>
         <td>${row.LED}</td>
-        <td class="${rssiClass}">${row.RSSI}</td>
+        <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
         <td>${row.Sheet}</td>
         <td>
-          <button onclick="setLed('${row.Device}',1)">ON</button>
-          <button onclick="setLed('${row.Device}',0)">OFF</button>
+          <button onclick="setLed('${row.Device}', true)">ON</button>
+          <button onclick="setLed('${row.Device}', false)">OFF</button>
         </td>
       `;
       tbody.appendChild(tr);
@@ -98,7 +91,6 @@ async function fetchData() {
 
 // Initial fetch
 fetchData();
-
 // Auto-refresh
 setInterval(fetchData, REFRESH_INTERVAL);
 </script>
