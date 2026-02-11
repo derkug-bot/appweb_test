@@ -42,18 +42,22 @@ function getRSSIClass(rssi) {
   else return 'rssi-weak';
 }
 
+
+  
+const REFRESH_INTERVAL = 5000; // 5 seconds
+
 async function fetchData() {
   try {
     const response = await fetch(DATA_URL);
     const data = await response.json();
 
     const tbody = document.querySelector('#dataTable tbody');
-    tbody.innerHTML = '';
+    tbody.innerHTML = ''; // clear old rows
 
     data.forEach(row => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${row.Timestamp}</td>
+        <td>${new Date(row.Timestamp).toLocaleString()}</td>
         <td>${row.Device}</td>
         <td>${row.A1}</td>
         <td>${row.A2}</td>
@@ -69,6 +73,12 @@ async function fetchData() {
     console.error('Error fetching data:', err);
   }
 }
+
+// initial fetch
+fetchData();
+// repeat every 5 seconds
+setInterval(fetchData, REFRESH_INTERVAL);
+
 
 // Initial fetch
 fetchData();
