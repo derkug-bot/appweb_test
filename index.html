@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ESP32 Dashboard</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f4f4f4; }
+    .strong { background-color: #b3ffb3; }
+    .weak { background-color: #ffcccc; }
+  </style>
+</head>
+<body>
+<h2>ESP32 Sensor Dashboard</h2>
+<table id="dashboard">
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>Device</th>
+      <th>A1</th>
+      <th>A2</th>
+      <th>A3</th>
+      <th>LED</th>
+      <th>RSSI</th>
+      <th>Sheet</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+const DATA_URL = "YOUR_GOOGLE_SCRIPT_EXEC_URL"; // replace with your Apps Script /exec URL
+
+async function loadDashboard() {
+  try {
+    const response = await fetch(DATA_URL);
+    const data = await response.json();
+    const tbody = document.querySelector('#dashboard tbody');
+    tbody.innerHTML = '';
+    data.forEach(row => {
+      const tr = document.createElement('tr');
+      Object.keys(row).forEach(key => {
+        const td = document.createElement('td');
+        td.textContent = row[key];
+        tr.appendChild(td);
+      });
+      const rssi = parseInt(row.RSSI);
+      if (rssi > -60) tr.cells[6].className = 'strong';
+      else if (rssi < -75) tr.cells[6].className = 'weak';
+      tbody.appendChild(tr);
+    });
+  } catch(err) {
+    console.error("Error loading dashboard:", err);
+  }
+}
+
+loadDashboard();
+setInterval(loadDashboard, 10000);
+</script>
+</body>
+</html>
