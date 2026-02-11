@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +10,8 @@
   table { width: 100%; border-collapse: collapse; margin-top: 20px; }
   th, td { padding: 8px 12px; border: 1px solid #ccc; text-align: center; }
   th { background-color: #333; color: #fff; }
+
+  /* RSSI colors */
   .rssi-strong { background-color: #4caf50; color: #fff; }
   .rssi-medium { background-color: #ffeb3b; }
   .rssi-weak { background-color: #f44336; color: #fff; }
@@ -34,34 +37,43 @@
 
 <script>
 const DATA_URL = "https://script.google.com/macros/s/AKfycbwJcyPYWUSdqBmjeolqufbsv8uuRC4CPAZrPMe6Ps4v3GWmlGpwa4DRx6ovFnzpFd0Vow/exec"; // replace with your Apps Script /exec URL
+const REFRESH_INTERVAL = 5000; // 5 seconds
 
-async function fetchData() {
-  const res = await fetch(DATA_URL);
-  const data = await res.json();
-  const tbody = document.querySelector("#dataTable tbody");
-  tbody.innerHTML = "";
-
-  data.forEach(row => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${new Date(row.Timestamp).toLocaleString()}</td>
-      <td>${row.Device}</td>
-      <td>${row.A1}</td>
-      <td>${row.A2}</td>
-      <td>${row.A3}</td>
-      <td>${row.LED}</td>
-      <td>${row.RSSI}</td>
-      <td>${row.Sheet}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+function getRssiClass(rssi) {
+  if (rssi >= -60) return "rssi-strong";    // strong signal
+  if (rssi >= -75) return "rssi-medium";   // medium signal
+  return "rssi-weak";                       // weak signal
 }
 
-// refresh every 5s
-setInterval(fetchData, 5000);
-fetchData();
+async function fetchData() {
+  try {
+    const res = await fetch(DATA_URL);
+    const data = await res.json();
+    const tbody = document.querySelector("#dataTable tbody");
+    tbody.innerHTML = "";
 
+    data.forEach(row => {
+      const tr = document.createElement("tr");
 
+      // Add RSSI class for color
+      const rssiClass = getRssiClass(row.RSSI);
+
+      tr.innerHTML = `
+        <td>${new Date(row.Timestamp).toLocaleString()}</td>
+        <td>${row.Device}</td>
+        <td>${row.A1}</td>
+        <td>${row.A2}</td>
+        <td>${row.A3}</td>
+        <td>${row.LED}</td>
+        <td class="${rssiClass}">${row.RSSI}</td>
+        <td>${row.Sheet}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Error fetching data:", err);
+  }
+}
 
 // Initial fetch
 fetchData();
