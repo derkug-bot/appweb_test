@@ -1,10 +1,9 @@
 
-
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ESP32 Dashboard with LED Control</title>
+<title>ESP32 Dashboard</title>
 <style>
   body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
   h1 { text-align: center; }
@@ -16,8 +15,6 @@
   .rssi-strong { background-color: #4caf50; color: #fff; }
   .rssi-medium { background-color: #ffeb3b; }
   .rssi-weak { background-color: #f44336; color: #fff; }
-
-  button { padding: 5px 10px; margin: 2px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -33,33 +30,35 @@
       <th>LED</th>
       <th>RSSI</th>
       <th>Sheet</th>
-      <th>Control</th>
     </tr>
   </thead>
   <tbody></tbody>
 </table>
 
-
 <script>
-const DATA_URL = "https://script.google.com/macros/s/AKfycbwJcyPYWUSdqBmjeolqufbsv8uuRC4CPAZrPMe6Ps4v3GWmlGpwa4DRx6ovFnzpFd0Vow/exec"; // replace with your Apps Script URL
+const DATA_URL = "https://script.google.com/macros/s/AKfycbwJcyPYWUSdqBmjeolqufbsv8uuRC4CPAZrPMe6Ps4v3GWmlGpwa4DRx6ovFnzpFd0Vow/exec"; // replace with your Apps Script /exec URL
 const REFRESH_INTERVAL = 5000; // 5 seconds
 
 function getRssiClass(rssi) {
-  rssi = Number(rssi);
-  if (rssi >= -60) return "rssi-strong";
-  if (rssi >= -75) return "rssi-medium";
-  return "rssi-weak";
+  rssi = Number(rssi); // <- force to number
+  if (rssi >= -60) return "rssi-strong";    // strong signal
+  if (rssi >= -75) return "rssi-medium";   // medium signal
+  return "rssi-weak";                       // weak signal
 }
+
 
 async function fetchData() {
   try {
-    const res = await fetch(SCRIPT_URL);
+    const res = await fetch(DATA_URL);
     const data = await res.json();
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
 
     data.forEach(row => {
       const tr = document.createElement("tr");
+
+      // Add RSSI class for color
+      const rssiClass = getRssiClass(row.RSSI);
 
       tr.innerHTML = `
         <td>${new Date(row.Timestamp).toLocaleString()}</td>
@@ -68,30 +67,13 @@ async function fetchData() {
         <td>${row.A2}</td>
         <td>${row.A3}</td>
         <td>${row.LED}</td>
-        <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
+          <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
         <td>${row.Sheet}</td>
-        <td>
-          <button onclick="setLed('${row.Device}',1)">ON</button>
-          <button onclick="setLed('${row.Device}',0)">OFF</button>
-        </td>
       `;
       tbody.appendChild(tr);
     });
   } catch (err) {
     console.error("Error fetching data:", err);
-  }
-}
-
-async function setLed(deviceID, state) {
-  try {
-    const url = `${SCRIPT_URL}?ledDevice=${deviceID}&led=${state}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    console.log("LED Response:", data);
-    // Immediately refresh table after changing LED
-    fetchData();
-  } catch (err) {
-    console.error("Error setting LED:", err);
   }
 }
 
