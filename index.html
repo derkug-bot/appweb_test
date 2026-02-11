@@ -40,10 +40,12 @@ const DATA_URL = "https://script.google.com/macros/s/AKfycbwJcyPYWUSdqBmjeolqufb
 const REFRESH_INTERVAL = 5000; // 5 seconds
 
 function getRssiClass(rssi) {
+  rssi = Number(rssi); // <- force to number
   if (rssi >= -60) return "rssi-strong";    // strong signal
   if (rssi >= -75) return "rssi-medium";   // medium signal
   return "rssi-weak";                       // weak signal
 }
+
 
 async function fetchData() {
   try {
@@ -65,7 +67,7 @@ async function fetchData() {
         <td>${row.A2}</td>
         <td>${row.A3}</td>
         <td>${row.LED}</td>
-        <td class="${rssiClass}">${row.RSSI}</td>
+          <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
         <td>${row.Sheet}</td>
       `;
       tbody.appendChild(tr);
