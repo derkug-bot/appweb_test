@@ -34,50 +34,33 @@
 
 <script>
 const DATA_URL = "https://script.google.com/macros/s/AKfycbwJcyPYWUSdqBmjeolqufbsv8uuRC4CPAZrPMe6Ps4v3GWmlGpwa4DRx6ovFnzpFd0Vow/exec"; // replace with your Apps Script /exec URL
-const REFRESH_INTERVAL = 5000; // 5 seconds
-
-function getRSSIClass(rssi) {
-  if (rssi >= -60) return 'rssi-strong';
-  else if (rssi >= -75) return 'rssi-medium';
-  else return 'rssi-weak';
-}
-
-
-  
-const REFRESH_INTERVAL = 5000; // 5 seconds
 
 async function fetchData() {
-  try {
-    const response = await fetch(DATA_URL);
-    const data = await response.json();
+  const res = await fetch(DATA_URL);
+  const data = await res.json();
+  const tbody = document.querySelector("#dataTable tbody");
+  tbody.innerHTML = "";
 
-    const tbody = document.querySelector('#dataTable tbody');
-    tbody.innerHTML = ''; // clear old rows
-
-    data.forEach(row => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${new Date(row.Timestamp).toLocaleString()}</td>
-        <td>${row.Device}</td>
-        <td>${row.A1}</td>
-        <td>${row.A2}</td>
-        <td>${row.A3}</td>
-        <td>${row.LED}</td>
-        <td class="${getRSSIClass(row.RSSI)}">${row.RSSI}</td>
-        <td>${row.Sheet}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-  } catch (err) {
-    console.error('Error fetching data:', err);
-  }
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${new Date(row.Timestamp).toLocaleString()}</td>
+      <td>${row.Device}</td>
+      <td>${row.A1}</td>
+      <td>${row.A2}</td>
+      <td>${row.A3}</td>
+      <td>${row.LED}</td>
+      <td>${row.RSSI}</td>
+      <td>${row.Sheet}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
-// initial fetch
+// refresh every 5s
+setInterval(fetchData, 5000);
 fetchData();
-// repeat every 5 seconds
-setInterval(fetchData, REFRESH_INTERVAL);
+
 
 
 // Initial fetch
