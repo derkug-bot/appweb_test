@@ -36,7 +36,11 @@
 </table>
 
 <script>
-const DATA_URL = "https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec"; // replace with your Apps Script /exec URL
+
+// 1. Add your key here (the one you saved in Script Properties)
+const API_KEY = "MY_SUPER_SECRET_123";
+  
+const DATA_URL = "https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec?key=${API_KEY}"; // replace with your Apps Script /exec URL
 const REFRESH_INTERVAL = 5000; // 5 seconds
 
 function getRssiClass(rssi) {
