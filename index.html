@@ -36,38 +36,30 @@
 </table>
 
 <script>
-
-// 1. Add your key here (the one you saved in Script Properties)
-const API_KEY = "MY_SUPER_SECRET_123"; 
-
-// 2. Append the key to the URL
-const DATA_URL = "https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec?key=${API_KEY}"; 
-
-const REFRESH_INTERVAL = 5000;
+const DATA_URL = "https://script.google.com/macros/s/AKfycbwJcyPYWUSdqBmjeolqufbsv8uuRC4CPAZrPMe6Ps4v3GWmlGpwa4DRx6ovFnzpFd0Vow/exec"; // replace with your Apps Script /exec URL
+const REFRESH_INTERVAL = 5000; // 5 seconds
 
 function getRssiClass(rssi) {
-  rssi = Number(rssi);
-  if (rssi >= -60) return "rssi-strong";
-  if (rssi >= -75) return "rssi-medium";
-  return "rssi-weak";
+  rssi = Number(rssi); // <- force to number
+  if (rssi >= -60) return "rssi-strong";    // strong signal
+  if (rssi >= -75) return "rssi-medium";   // medium signal
+  return "rssi-weak";                       // weak signal
 }
+
 
 async function fetchData() {
   try {
     const res = await fetch(DATA_URL);
     const data = await res.json();
-    
-    // Check if the script returned an error object instead of an array
-    if (data.status === "error") {
-      console.error("Auth Error:", data.message);
-      return;
-    }
-
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
 
     data.forEach(row => {
       const tr = document.createElement("tr");
+
+      // Add RSSI class for color
+      const rssiClass = getRssiClass(row.RSSI);
+
       tr.innerHTML = `
         <td>${new Date(row.Timestamp).toLocaleString()}</td>
         <td>${row.Device}</td>
@@ -75,7 +67,7 @@ async function fetchData() {
         <td>${row.A2}</td>
         <td>${row.A3}</td>
         <td>${row.LED}</td>
-        <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
+          <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
         <td>${row.Sheet}</td>
       `;
       tbody.appendChild(tr);
@@ -85,5 +77,11 @@ async function fetchData() {
   }
 }
 
+// Initial fetch
 fetchData();
+
+// Auto-refresh
 setInterval(fetchData, REFRESH_INTERVAL);
+</script>
+</body>
+</html>
