@@ -23,6 +23,13 @@
   <h2>Oil Temperature Trend</h2>
 <canvas id="oilTempChart"></canvas>
 
+
+  <select id="sheetSelect">
+  <option value="Sheet1">Sheet1</option>
+  <option value="DeviceA">DeviceA</option>
+  <option value="DeviceB">DeviceB</option>
+</select>
+
   
 <h1>ESP32 Dashboard</h1>
 <table id="dataTable">
@@ -117,7 +124,13 @@ function createChart(labels, values) {
   
 async function fetchData() {
   try {
-    const res = await fetch(DATA_URL);
+    // const res = await fetch(DATA_URL);
+const sheet = document.getElementById("sheetSelect").value;
+const res = await fetch(getDataUrl(sheet));
+
+    document.getElementById("sheetSelect")
+  .addEventListener("change", fetchData);
+
     const data = await res.json();
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
