@@ -30,6 +30,7 @@
       <th>LED</th>
       <th>RSSI</th>
       <th>Sheet</th>
+      <th>oilp</th>
     </tr>
   </thead>
   <tbody></tbody>
@@ -72,6 +73,7 @@ async function fetchData() {
         <td>${row.LED}</td>
           <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
         <td>${row.Sheet}</td>
+        <td>${row.oilp}</td>
       `;
       tbody.appendChild(tr);
     });
