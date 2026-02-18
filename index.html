@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>ESP32 SCADA Dashboard with Gauges</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -45,6 +45,8 @@
   canvas {
     background: #0d0d0d;
     border-radius: 6px;
+    display: block;
+    margin: 0 auto;
   }
 
   table {
@@ -66,11 +68,23 @@
     border-bottom: 1px solid #333;
   }
 
-  tr:nth-child(even) { background: #181818; }
+  tr:nth-child(even) {
+    background: #181818;
+  }
 
-  .rssi-strong { background-color: #2e7d32; color: #fff; }
-  .rssi-medium { background-color: #f9a825; }
-  .rssi-weak { background-color: #c62828; color: #fff; }
+  .rssi-strong {
+    background-color: #2e7d32;
+    color: #fff;
+  }
+
+  .rssi-medium {
+    background-color: #f9a825;
+  }
+
+  .rssi-weak {
+    background-color: #c62828;
+    color: #fff;
+  }
 
   /* Collapsible table toggle */
   .toggle-button {
@@ -91,19 +105,19 @@
 <!-- Gauges -->
 <div class="gauges">
   <div class="gauge-card">
-    <canvas id="gaugeH2O" height="100"></canvas>
+    <canvas id="gaugeH2O" width="200" height="100"></canvas>
     <div>H2O Temp</div>
   </div>
   <div class="gauge-card">
-    <canvas id="gaugeOil" height="100"></canvas>
+    <canvas id="gaugeOil" width="200" height="100"></canvas>
     <div>Oil Temp</div>
   </div>
   <div class="gauge-card">
-    <canvas id="gaugeS1" height="100"></canvas>
+    <canvas id="gaugeS1" width="200" height="100"></canvas>
     <div>S1</div>
   </div>
   <div class="gauge-card">
-    <canvas id="gaugeS2" height="100"></canvas>
+    <canvas id="gaugeS2" width="200" height="100"></canvas>
     <div>S2</div>
   </div>
 </div>
@@ -143,11 +157,7 @@
 const DATA_URL = "https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec";
 const REFRESH_INTERVAL = 5000;
 
-let gaugeH2O, gaugeOil, gaugeS1, gaugeS2;
-let tempChart, pressureChart;
-
-
-
+// Center text plugin for Chart.js 4 to display gauge value inside the dial
 const centerTextPlugin = {
   id: "centerText",
   beforeDraw(chart) {
@@ -180,7 +190,7 @@ function createGauge(ctx, color) {
       rotation: -Math.PI,
       circumference: Math.PI,
       cutout: "70%",
-      responsive: false,  // Important for fixed size
+      responsive: false,
       animation: false,
       plugins: {
         legend: { display: false },
@@ -191,34 +201,23 @@ function createGauge(ctx, color) {
   });
 }
 
-// Update gauge value
 function updateGauge(gauge, value) {
-  value = Math.min(Math.max(value, 0), 120); // clamp to 0-120
+  value = Math.min(Math.max(value, 0), 120);
   gauge.data.datasets[0].data[0] = value;
   gauge.data.datasets[0].data[1] = 120 - value;
   gauge.update();
 }
 
-// Initialize gauges with soft colors
-gaugeH2O = createGauge(document.getElementById("gaugeH2O"), "rgba(41,182,246,0.6)"); // soft blue
-gaugeOil = createGauge(document.getElementById("gaugeOil"), "rgba(255,82,82,0.6)"); // soft red
-gaugeS1  = createGauge(document.getElementById("gaugeS1"), "rgba(0,230,118,0.6)"); // soft green
-gaugeS2  = createGauge(document.getElementById("gaugeS2"), "rgba(255,235,59,0.6)"); // soft yellow
+let gaugeH2O, gaugeOil, gaugeS1, gaugeS2;
+let tempChart, pressureChart;
 
-// Update gauges with latest row after fetch
-if (data.length > 0) {
-  const last = data[data.length - 1];
-  updateGauge(gaugeH2O, Number(last.H2o_T));
-  updateGauge(gaugeOil, Number(last.Oil_T));
-  updateGauge(gaugeS1, Number(last.S1));
-  updateGauge(gaugeS2, Number(last.S2));
+function initGauges() {
+  gaugeH2O = createGauge(document.getElementById("gaugeH2O"), "rgba(41,182,246,0.6)"); // soft blue
+  gaugeOil = createGauge(document.getElementById("gaugeOil"), "rgba(255,82,82,0.6)"); // soft red
+  gaugeS1 = createGauge(document.getElementById("gaugeS1"), "rgba(0,230,118,0.6)"); // soft green
+  gaugeS2 = createGauge(document.getElementById("gaugeS2"), "rgba(255,235,59,0.6)"); // soft yellow
 }
 
-
-
-  
-
-// --- Charts ---
 function initTempChart() {
   const ctx = document.getElementById("tempChart").getContext("2d");
   tempChart = new Chart(ctx, {
@@ -237,9 +236,12 @@ function initTempChart() {
       animation: false,
       interaction: { mode: "index", intersect: false },
       plugins: { legend: { labels: { color: "#fff" } } },
-      scales: { 
+      scales: {
         x: { ticks: { color: "#aaa" } },
-        y: { title: { display: true, text: "Temperature / Sensor", color: "#fff" }, ticks: { color: "#fff" } }
+        y: {
+          title: { display: true, text: "Temperature / Sensor", color: "#fff" },
+          ticks: { color: "#fff" }
+        }
       }
     }
   });
@@ -261,7 +263,13 @@ function initPressureChart() {
       animation: false,
       interaction: { mode: "index", intersect: false },
       plugins: { legend: { labels: { color: "#fff" } } },
-      scales: { x: { ticks: { color: "#aaa" } }, y: { ticks: { color: "#fff" }, title: { display: true, text: "Pressure (bar)", color: "#fff" } } }
+      scales: {
+        x: { ticks: { color: "#aaa" } },
+        y: {
+          ticks: { color: "#fff" },
+          title: { display: true, text: "Pressure (bar)", color: "#fff" }
+        }
+      }
     }
   });
 }
@@ -273,13 +281,11 @@ function getRssiClass(rssi) {
   return "rssi-weak";
 }
 
-// Toggle table
 function toggleTable() {
   const table = document.getElementById("dataTable");
   table.style.display = (table.style.display === "none") ? "table" : "none";
 }
 
-// --- Fetch & update ---
 async function fetchData() {
   try {
     const res = await fetch(DATA_URL);
@@ -296,19 +302,19 @@ async function fetchData() {
     data.forEach(row => {
       const time = new Date(row.Timestamp).toLocaleTimeString();
 
-      // --- Temperature Chart ---
+      // Temperature chart update
       tempChart.data.labels.push(time);
       tempChart.data.datasets[0].data.push(Number(row.Oil_T));
       tempChart.data.datasets[1].data.push(Number(row.H2o_T));
       tempChart.data.datasets[2].data.push(Number(row.S1));
       tempChart.data.datasets[3].data.push(Number(row.S2));
 
-      // --- Pressure Chart ---
+      // Pressure chart update
       pressureChart.data.labels.push(time);
       pressureChart.data.datasets[0].data.push(Number(row.Oil_P));
       pressureChart.data.datasets[1].data.push(Number(row.H2o_P));
 
-      // --- Table ---
+      // Table row
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${time}</td>
@@ -327,7 +333,7 @@ async function fetchData() {
     tempChart.update();
     pressureChart.update();
 
-    // --- Update gauges with latest row only ---
+    // Update gauges with latest data
     if (data.length > 0) {
       const last = data[data.length - 1];
       updateGauge(gaugeH2O, Number(last.H2o_T));
@@ -335,13 +341,12 @@ async function fetchData() {
       updateGauge(gaugeS1, Number(last.S1));
       updateGauge(gaugeS2, Number(last.S2));
     }
-
-  } catch(err) {
+  } catch (err) {
     console.error("Error fetching data:", err);
   }
 }
 
-// --- Initialize ---
+// Initialize everything
 initGauges();
 initTempChart();
 initPressureChart();
