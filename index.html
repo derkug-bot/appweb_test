@@ -2,90 +2,175 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ESP32 Dashboard</title>
-
+<title>ESP32 SCADA Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-  body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-  h1 { text-align: center; }
+  body {
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: #eee;
+    padding: 20px;
+  }
 
-  canvas { background: #fff; margin-bottom: 20px; }
+  h1 {
+    text-align: center;
+    color: #00e5ff;
+    margin-bottom: 30px;
+  }
 
-  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-  th, td { padding: 8px 12px; border: 1px solid #ccc; text-align: center; }
-  th { background-color: #333; color: #fff; }
+  .card {
+    background: #1b1b1b;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,255,255,0.2);
+    margin-bottom: 30px;
+  }
 
-  .rssi-strong { background-color: #4caf50; color: #fff; }
-  .rssi-medium { background-color: #ffeb3b; }
-  .rssi-weak { background-color: #f44336; color: #fff; }
+  canvas {
+    background: #0d0d0d;
+    border-radius: 6px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 14px;
+  }
+
+  th {
+    background: #222;
+    color: #00e5ff;
+    padding: 8px;
+  }
+
+  td {
+    padding: 6px;
+    text-align: center;
+    border-bottom: 1px solid #333;
+  }
+
+  tr:nth-child(even) { background: #181818; }
+
+  .rssi-strong { background-color: #2e7d32; color: #fff; }
+  .rssi-medium { background-color: #f9a825; }
+  .rssi-weak { background-color: #c62828; color: #fff; }
 </style>
 </head>
 
 <body>
 
-<h1>ESP32 Dashboard</h1>
+<h1>⚙ ESP32 Industrial SCADA Dashboard</h1>
 
-<!-- ✅ Chart goes in BODY, not STYLE -->
-<canvas id="tempChart" height="100"></canvas>
+<div class="card">
+  <canvas id="scadaChart" height="120"></canvas>
+</div>
 
-<table id="dataTable">
-<thead>
-<tr>
-<th>Timestamp</th>
-<th>Device</th>
-<th>RSSI</th>
-<th>A1</th>
-<th>A2</th>
-<th>A3</th>
-<th>A4</th>
-<th>Oil_T</th>
-<th>Oil_P</th>
-<th>H2o_T</th>
-<th>H2o_P</th>
-<th>S1</th>
-<th>S2</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
+<div class="card">
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Device</th>
+        <th>RSSI</th>
+        <th>Oil_T</th>
+        <th>Oil_P</th>
+        <th>H2o_T</th>
+        <th>H2o_P</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
 <script>
-const DATA_URL = `https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec`;
+const DATA_URL = "YOUR_SCRIPT_URL_HERE";
 const REFRESH_INTERVAL = 5000;
 
-let tempChart;
+const MIN_TEMP = 60;   // 🔵 Set your min temp
+const MAX_TEMP = 95;   // 🔴 Set your max temp
+
+let scadaChart;
 
 function initChart() {
-  const ctx = document.getElementById("tempChart").getContext("2d");
+  const ctx = document.getElementById("scadaChart").getContext("2d");
 
-  tempChart = new Chart(ctx, {
+  scadaChart = new Chart(ctx, {
     type: "line",
     data: {
       labels: [],
       datasets: [
         {
-          label: "Oil Temperature",
-          borderColor: "red",
-          backgroundColor: "rgba(255,0,0,0.1)",
+          label: "Oil Temp (°C)",
           data: [],
+          borderColor: "#ff5252",
+          yAxisID: "yTemp",
           tension: 0.3
         },
         {
-          label: "Water Temperature",
-          borderColor: "blue",
-          backgroundColor: "rgba(0,0,255,0.1)",
+          label: "Water Temp (°C)",
           data: [],
+          borderColor: "#29b6f6",
+          yAxisID: "yTemp",
           tension: 0.3
+        },
+        {
+          label: "Oil Pressure (bar)",
+          data: [],
+          borderColor: "#ff9800",
+          yAxisID: "yPressure",
+          tension: 0.3
+        },
+        {
+          label: "Water Pressure (bar)",
+          data: [],
+          borderColor: "#00e676",
+          yAxisID: "yPressure",
+          tension: 0.3
+        },
+        {
+          label: "Min Temp",
+          data: [],
+          borderColor: "#2196f3",
+          borderDash: [5,5],
+          pointRadius: 0,
+          yAxisID: "yTemp"
+        },
+        {
+          label: "Max Temp",
+          data: [],
+          borderColor: "#f44336",
+          borderDash: [5,5],
+          pointRadius: 0,
+          yAxisID: "yTemp"
         }
       ]
     },
     options: {
       responsive: true,
       animation: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { labels: { color: "#fff" } }
+      },
       scales: {
-        x: { title: { display: true, text: "Time" } },
-        y: { title: { display: true, text: "Temperature (°C)" } }
+        x: {
+          ticks: { color: "#aaa" }
+        },
+        yTemp: {
+          type: "linear",
+          position: "left",
+          title: { display: true, text: "Temperature (°C)", color: "#ff5252" },
+          ticks: { color: "#ff5252" }
+        },
+        yPressure: {
+          type: "linear",
+          position: "right",
+          title: { display: true, text: "Pressure (bar)", color: "#00e676" },
+          grid: { drawOnChartArea: false },
+          ticks: { color: "#00e676" }
+        }
       }
     }
   });
@@ -99,52 +184,43 @@ function getRssiClass(rssi) {
 }
 
 async function fetchData() {
-  try {
-    const res = await fetch(DATA_URL);
-    const data = await res.json();
+  const res = await fetch(DATA_URL);
+  const data = await res.json();
 
-    const tbody = document.querySelector("#dataTable tbody");
-    tbody.innerHTML = "";
+  const tbody = document.querySelector("#dataTable tbody");
+  tbody.innerHTML = "";
 
-    // Clear chart
-    tempChart.data.labels = [];
-    tempChart.data.datasets[0].data = [];
-    tempChart.data.datasets[1].data = [];
+  // Clear chart
+  scadaChart.data.labels = [];
+  scadaChart.data.datasets.forEach(ds => ds.data = []);
 
-    data.forEach(row => {
+  data.forEach(row => {
+    const time = new Date(row.Timestamp).toLocaleTimeString();
 
-      // Add to chart
-      tempChart.data.labels.push(
-        new Date(row.Timestamp).toLocaleTimeString()
-      );
-      tempChart.data.datasets[0].data.push(Number(row.Oil_T));
-      tempChart.data.datasets[1].data.push(Number(row.H2o_T));
+    scadaChart.data.labels.push(time);
 
-      // Add to table
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${new Date(row.Timestamp).toLocaleString()}</td>
-        <td>${row.Device}</td>
-        <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
-        <td>${row.A1}</td>
-        <td>${row.A2}</td>
-        <td>${row.A3}</td>
-        <td>${row.A4}</td>
-        <td>${row.Oil_T}</td>
-        <td>${row.Oil_P}</td>
-        <td>${row.H2o_T}</td>
-        <td>${row.H2o_P}</td>
-        <td>${row.S1}</td>
-        <td>${row.S2}</td>
-      `;
-      tbody.appendChild(tr);
-    });
+    scadaChart.data.datasets[0].data.push(Number(row.Oil_T));
+    scadaChart.data.datasets[1].data.push(Number(row.H2o_T));
+    scadaChart.data.datasets[2].data.push(Number(row.Oil_P));
+    scadaChart.data.datasets[3].data.push(Number(row.H2o_P));
 
-    tempChart.update();
+    scadaChart.data.datasets[4].data.push(MIN_TEMP);
+    scadaChart.data.datasets[5].data.push(MAX_TEMP);
 
-  } catch (err) {
-    console.error("Error fetching data:", err);
-  }
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${time}</td>
+      <td>${row.Device}</td>
+      <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
+      <td>${row.Oil_T}</td>
+      <td>${row.Oil_P}</td>
+      <td>${row.H2o_T}</td>
+      <td>${row.H2o_P}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  scadaChart.update();
 }
 
 initChart();
