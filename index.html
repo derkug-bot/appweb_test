@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <title>ESP32 SCADA Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -11,11 +12,13 @@
     color: #eee;
     padding: 20px;
   }
+
   h1 {
     text-align: center;
     color: #00e5ff;
     margin-bottom: 30px;
   }
+
   .card {
     background: #1b1b1b;
     padding: 20px;
@@ -23,84 +26,116 @@
     box-shadow: 0 0 15px rgba(0,255,255,0.2);
     margin-bottom: 30px;
   }
+
+  .top-values {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 30px;
+  }
+
+  .value-box {
+    background: #222;
+    border-radius: 8px;
+    padding: 15px 30px;
+    text-align: center;
+    box-shadow: 0 0 8px rgba(0,255,255,0.15);
+    width: 150px;
+    user-select: none;
+  }
+
+  .value-label {
+    font-size: 14px;
+    color: #66ffff;
+    margin-bottom: 6px;
+  }
+
+  .value-number {
+    font-size: 25px;
+    color: #00e5ff;
+    font-weight: bold;
+  }
+
   canvas {
     background: #0d0d0d;
     border-radius: 6px;
   }
+
   table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
     font-size: 14px;
   }
+
   th {
     background: #222;
     color: #00e5ff;
     padding: 8px;
   }
+
   td {
     padding: 6px;
     text-align: center;
     border-bottom: 1px solid #333;
   }
+
   tr:nth-child(even) { background: #181818; }
+
   .rssi-strong { background-color: #2e7d32; color: #fff; }
   .rssi-medium { background-color: #f9a825; }
   .rssi-weak { background-color: #c62828; color: #fff; }
-  /* Gauges container */
-  #gauges {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    margin-bottom: 30px;
-  }
-  .gauge-card {
-    background: #1b1b1b;
-    border-radius: 8px;
-    padding: 15px;
-    width: 140px;
-    text-align: center;
-    box-shadow: 0 0 12px rgba(0,255,255,0.15);
-  }
-  .gauge-label {
-    margin-top: 8px;
-    color: #aaa;
+
+  #toggleTableBtn {
+    background: #00e5ff;
+    border: none;
+    color: #111;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 10px;
   }
 </style>
 </head>
+
 <body>
 
 <h1>⚙ ESP32 SCADA Dashboard</h1>
 
-<div id="gauges">
-  <div class="gauge-card">
-    <canvas id="gaugeH2O" width="140" height="140"></canvas>
-    <div class="gauge-label">H2O Temp</div>
+<!-- Top values display -->
+<div class="top-values">
+  <div class="value-box">
+    <div class="value-label">H2O Temp (°C)</div>
+    <div id="valH2oT" class="value-number">--</div>
   </div>
-  <div class="gauge-card">
-    <canvas id="gaugeOil" width="140" height="140"></canvas>
-    <div class="gauge-label">Oil Temp</div>
+  <div class="value-box">
+    <div class="value-label">Oil Temp (°C)</div>
+    <div id="valOilT" class="value-number">--</div>
   </div>
-  <div class="gauge-card">
-    <canvas id="gaugeS1" width="140" height="140"></canvas>
-    <div class="gauge-label">S1</div>
+  <div class="value-box">
+    <div class="value-label">S1</div>
+    <div id="valS1" class="value-number">--</div>
   </div>
-  <div class="gauge-card">
-    <canvas id="gaugeS2" width="140" height="140"></canvas>
-    <div class="gauge-label">S2</div>
+  <div class="value-box">
+    <div class="value-label">S2</div>
+    <div id="valS2" class="value-number">--</div>
   </div>
 </div>
 
+<!-- Temperature chart -->
 <div class="card">
   <canvas id="scadaChart" height="120"></canvas>
 </div>
 
+<!-- Pressure chart -->
 <div class="card">
   <canvas id="pressureChart" height="60"></canvas>
 </div>
 
-<div class="card">
-  <button id="toggleTableBtn" style="margin-bottom: 10px; cursor:pointer; color:#00e5ff; background:none; border:none; text-decoration: underline;">Toggle Table</button>
+<!-- Toggle button for table -->
+<button id="toggleTableBtn">Toggle Table</button>
+
+<!-- Data table -->
+<div class="card" id="tableContainer">
   <table id="dataTable">
     <thead>
       <tr>
@@ -109,8 +144,8 @@
         <th>RSSI</th>
         <th>Oil_T</th>
         <th>Oil_P</th>
-        <th>H2O_T</th>
-        <th>H2O_P</th>
+        <th>H2o_T</th>
+        <th>H2o_P</th>
         <th>S1</th>
         <th>S2</th>
       </tr>
@@ -123,53 +158,12 @@
 const DATA_URL = "https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec";
 const REFRESH_INTERVAL = 5000;
 
-const GAUGE_MIN = 0;
-const GAUGE_MAX = 120;
-
-let gaugeH2O, gaugeOil, gaugeS1, gaugeS2;
-let tempChart, pressureChart;
-
-function createGauge(ctx, color) {
-  return new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Value', 'Remaining'],
-      datasets: [{
-        data: [0, 120],
-        backgroundColor: [color, '#222'],
-        borderWidth: 0,
-        cutout: '80%',
-        rotation: Math.PI,       // 180 degrees start (bottom)
-        circumference: Math.PI,  // 180 degrees arc (half circle)
-      }]
-    },
-    options: {
-      responsive: false,
-      animation: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: false },
-      }
-    },
-  });
-}
-
-function updateGauge(chart, value) {
-  const val = Math.min(Math.max(value, GAUGE_MIN), GAUGE_MAX);
-  chart.data.datasets[0].data[0] = val;
-  chart.data.datasets[0].data[1] = GAUGE_MAX - val;
-  chart.update();
-}
-
-function initGauges() {
-  gaugeH2O = createGauge(document.getElementById('gaugeH2O').getContext('2d'), '#29b6f6');
-  gaugeOil = createGauge(document.getElementById('gaugeOil').getContext('2d'), '#ff5252');
-  gaugeS1 = createGauge(document.getElementById('gaugeS1').getContext('2d'), '#00e676');
-  gaugeS2 = createGauge(document.getElementById('gaugeS2').getContext('2d'), '#ffeb3b');
-}
+let tempChart;
+let pressureChart;
 
 function initTempChart() {
   const ctx = document.getElementById("scadaChart").getContext("2d");
+
   tempChart = new Chart(ctx, {
     type: "line",
     data: {
@@ -179,29 +173,25 @@ function initTempChart() {
           label: "Oil Temp (°C)",
           data: [],
           borderColor: "#ff5252",
-          tension: 0.3,
-          spanGaps: false,
+          tension: 0.3
         },
         {
           label: "Water Temp (°C)",
           data: [],
           borderColor: "#29b6f6",
-          tension: 0.3,
-          spanGaps: false,
+          tension: 0.3
         },
         {
           label: "S1",
           data: [],
           borderColor: "#00e676",
-          tension: 0.3,
-          spanGaps: false,
+          tension: 0.3
         },
         {
           label: "S2",
           data: [],
           borderColor: "#ffeb3b",
-          tension: 0.3,
-          spanGaps: false,
+          tension: 0.3
         }
       ]
     },
@@ -216,9 +206,7 @@ function initTempChart() {
         x: { ticks: { color: "#aaa" } },
         y: {
           title: { display: true, text: "Temperature / Sensor", color: "#fff" },
-          ticks: { color: "#fff" },
-          min: 0,
-          max: 110
+          ticks: { color: "#fff" }
         }
       }
     }
@@ -227,6 +215,7 @@ function initTempChart() {
 
 function initPressureChart() {
   const ctx = document.getElementById("pressureChart").getContext("2d");
+
   pressureChart = new Chart(ctx, {
     type: "line",
     data: {
@@ -236,15 +225,13 @@ function initPressureChart() {
           label: "Oil Pressure (bar)",
           data: [],
           borderColor: "#ff9800",
-          tension: 0.3,
-          spanGaps: false,
+          tension: 0.3
         },
         {
           label: "Water Pressure (bar)",
           data: [],
           borderColor: "#00e5ff",
-          tension: 0.3,
-          spanGaps: false,
+          tension: 0.3
         }
       ]
     },
@@ -258,10 +245,8 @@ function initPressureChart() {
       scales: {
         x: { ticks: { color: "#aaa" } },
         y: {
-          title: { display: true, text: "Pressure (Psi)", color: "#fff" },
-          ticks: { color: "#fff" },
-          min: 0,
-          max: 80
+          title: { display: true, text: "Pressure (bar)", color: "#fff" },
+          ticks: { color: "#fff" }
         }
       }
     }
@@ -286,48 +271,34 @@ async function fetchData() {
     // Clear charts
     tempChart.data.labels = [];
     pressureChart.data.labels = [];
+
     tempChart.data.datasets.forEach(ds => ds.data = []);
     pressureChart.data.datasets.forEach(ds => ds.data = []);
 
-    let lastValid = { oilT: 0, h2oT: 0, s1: 0, s2: 0 };
+    // Variables for top values display - last row data
+    let latest = null;
 
     data.forEach(row => {
-      const timestamp = new Date(row.Timestamp);
-      if (isNaN(timestamp)) return;
+      const time = new Date(row.Timestamp).toLocaleTimeString();
 
-      const time = timestamp.toLocaleTimeString();
-
-      // Parse sensor values
-      let oilT = Number(row.Oil_T);
-      let h2oT = Number(row.H2o_T);
-      let s1 = Number(row.S1);
-      let s2 = Number(row.S2);
-      let oilP = Number(row.Oil_P);
-      let h2oP = Number(row.H2o_P);
-      let rssi = Number(row.RSSI);
-
-      // Clamp temps or use null for gaps
-      oilT = oilT < GAUGE_MIN || oilT > GAUGE_MAX ? null : oilT;
-      h2oT = h2oT < GAUGE_MIN || h2oT > GAUGE_MAX ? null : h2oT;
-      s1 = s1 < GAUGE_MIN || s1 > GAUGE_MAX ? null : s1;
-      s2 = s2 < GAUGE_MIN || s2 > GAUGE_MAX ? null : s2;
-
+      // --- Temperature Chart ---
       tempChart.data.labels.push(time);
-      tempChart.data.datasets[0].data.push(oilT);
-      tempChart.data.datasets[1].data.push(h2oT);
-      tempChart.data.datasets[2].data.push(s1);
-      tempChart.data.datasets[3].data.push(s2);
+      tempChart.data.datasets[0].data.push(Number(row.Oil_T));
+      tempChart.data.datasets[1].data.push(Number(row.H2o_T));
+      tempChart.data.datasets[2].data.push(Number(row.S1));
+      tempChart.data.datasets[3].data.push(Number(row.S2));
 
+      // --- Pressure Chart ---
       pressureChart.data.labels.push(time);
-      pressureChart.data.datasets[0].data.push(oilP);
-      pressureChart.data.datasets[1].data.push(h2oP);
+      pressureChart.data.datasets[0].data.push(Number(row.Oil_P));
+      pressureChart.data.datasets[1].data.push(Number(row.H2o_P));
 
-      // Add to table
+      // Table row
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${time}</td>
+        <td>${new Date(row.Timestamp).toLocaleTimeString()}</td>
         <td>${row.Device}</td>
-        <td class="${getRssiClass(rssi)}">${rssi}</td>
+        <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
         <td>${row.Oil_T}</td>
         <td>${row.Oil_P}</td>
         <td>${row.H2o_T}</td>
@@ -337,42 +308,46 @@ async function fetchData() {
       `;
       tbody.appendChild(tr);
 
-      // Store last valid values for gauges (ignore null)
-      if (oilT !== null) lastValid.oilT = oilT;
-      if (h2oT !== null) lastValid.h2oT = h2oT;
-      if (s1 !== null) lastValid.s1 = s1;
-      if (s2 !== null) lastValid.s2 = s2;
+      latest = row;
     });
+
+    // Update top values with latest data or show -- if none
+    if (latest) {
+      document.getElementById("valH2oT").textContent = latest.H2o_T;
+      document.getElementById("valOilT").textContent = latest.Oil_T;
+      document.getElementById("valS1").textContent = latest.S1;
+      document.getElementById("valS2").textContent = latest.S2;
+    } else {
+      document.getElementById("valH2oT").textContent = "--";
+      document.getElementById("valOilT").textContent = "--";
+      document.getElementById("valS1").textContent = "--";
+      document.getElementById("valS2").textContent = "--";
+    }
 
     tempChart.update();
     pressureChart.update();
-
-    // Update gauges with last valid values
-    updateGauge(gaugeOil, lastValid.oilT);
-    updateGauge(gaugeH2O, lastValid.h2oT);
-    updateGauge(gaugeS1, lastValid.s1);
-    updateGauge(gaugeS2, lastValid.s2);
   } catch (err) {
     console.error("Error fetching data:", err);
   }
 }
 
-// Toggle table visibility
-document.getElementById('toggleTableBtn').addEventListener('click', () => {
-  const table = document.getElementById('dataTable');
-  if (table.style.display === 'none') {
-    table.style.display = '';
-  } else {
-    table.style.display = 'none';
-  }
-});
-
-// Initialization
-initGauges();
 initTempChart();
 initPressureChart();
+
 fetchData();
 setInterval(fetchData, REFRESH_INTERVAL);
+
+// Table toggle logic
+const toggleBtn = document.getElementById("toggleTableBtn");
+const tableContainer = document.getElementById("tableContainer");
+
+toggleBtn.addEventListener("click", () => {
+  if (tableContainer.style.display === "none") {
+    tableContainer.style.display = "block";
+  } else {
+    tableContainer.style.display = "none";
+  }
+});
 </script>
 
 </body>
