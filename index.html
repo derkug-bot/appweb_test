@@ -1,12 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>ESP32 Dashboard</title>
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <style>
   body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
   h1 { text-align: center; }
@@ -14,29 +11,14 @@
   th, td { padding: 8px 12px; border: 1px solid #ccc; text-align: center; }
   th { background-color: #333; color: #fff; }
 
+  /* RSSI colors */
   .rssi-strong { background-color: #4caf50; color: #fff; }
   .rssi-medium { background-color: #ffeb3b; }
   .rssi-weak { background-color: #f44336; color: #fff; }
-
-  select { padding: 6px; margin-bottom: 15px; }
 </style>
 </head>
-
 <body>
-
-<h2>Oil Temperature Trend</h2>
-<canvas id="oilTempChart"></canvas>
-
-<br>
-
-<select id="sheetSelect">
-  <option value="Sheet1">Sheet1</option>
-  <option value="Sheet3">Sheet3</option>
-  <option value="DeviceB">DeviceB</option>
-</select>
-
 <h1>ESP32 Dashboard</h1>
-
 <table id="dataTable">
   <thead>
     <tr>
@@ -57,79 +39,46 @@
   </thead>
   <tbody></tbody>
 </table>
+      <!-- <th>LED</th> -->
+      <!-- <th>Sheet</th> -->
 
+  
 <script>
+// const API_KEY = "MY_SUPER_SECRET_123"; // same as in your Apps Script
+// const DATA_URL = `https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec?key=${API_KEY}`;
+  const DATA_URL = `https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec`;
 
-const BASE_URL = "https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec";
-const REFRESH_INTERVAL = 5000;
-
-function getDataUrl(sheetName) {
-  return `${BASE_URL}?sheet=${sheetName}`;
-}
+const REFRESH_INTERVAL = 5000; // 5 seconds
 
 function getRssiClass(rssi) {
-  rssi = Number(rssi);
-  if (rssi >= -60) return "rssi-strong";
-  if (rssi >= -75) return "rssi-medium";
-  return "rssi-weak";
+  rssi = Number(rssi); // <- force to number
+  if (rssi >= -60) return "rssi-strong";    // strong signal
+  if (rssi >= -75) return "rssi-medium";   // medium signal
+  return "rssi-weak";                       // weak signal
 }
 
-let oilTempChart;
-
-function createChart(labels, values) {
-  const ctx = document.getElementById('oilTempChart').getContext('2d');
-
-  if (oilTempChart) {
-    oilTempChart.destroy();
-  }
-
-  oilTempChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Oil Temperature',
-        data: values,
-        borderColor: 'red',
-        backgroundColor: 'rgba(255,0,0,0.1)',
-        fill: true,
-        tension: 0.3
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        x: { display: true },
-        y: { beginAtZero: false }
-      }
-    }
-  });
-}
 
 async function fetchData() {
   try {
-    const sheet = document.getElementById("sheetSelect").value;
-    const res = await fetch(getDataUrl(sheet));
+    const res = await fetch(DATA_URL);
     const data = await res.json();
-
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
 
-    const labels = [];
-    const oilTemps = [];
-
     data.forEach(row => {
-
       const tr = document.createElement("tr");
+
+      // Add RSSI class for color
+      const rssiClass = getRssiClass(row.RSSI);
 
       tr.innerHTML = `
         <td>${new Date(row.Timestamp).toLocaleString()}</td>
         <td>${row.Device}</td>
-        <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
+         <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
         <td>${row.A1}</td>
         <td>${row.A2}</td>
         <td>${row.A3}</td>
-        <td>${row.A4}</td>
+        <td>${row.A4}</td>        
         <td>${row.Oil_T}</td>
         <td>${row.Oil_P}</td>
         <td>${row.H2o_T}</td>
@@ -137,31 +86,20 @@ async function fetchData() {
         <td>${row.S1}</td>
         <td>${row.S2}</td>
       `;
-
       tbody.appendChild(tr);
-
-      labels.push(new Date(row.Timestamp).toLocaleTimeString());
-      oilTemps.push(Number(row.Oil_T));
+              // <td>${row.LED}</td>      
+        // <td>${row.Sheet}</td>
     });
-
-    createChart(labels, oilTemps);
-
   } catch (err) {
     console.error("Error fetching data:", err);
   }
 }
 
-/* Sheet change listener */
-document.getElementById("sheetSelect")
-  .addEventListener("change", fetchData);
-
-/* Initial load */
+// Initial fetch
 fetchData();
 
-/* Auto refresh */
+// Auto-refresh
 setInterval(fetchData, REFRESH_INTERVAL);
-
 </script>
-
 </body>
 </html>
