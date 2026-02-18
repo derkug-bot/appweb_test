@@ -164,54 +164,88 @@ let pressureChart;
 function initTempChart() {
   const ctx = document.getElementById("scadaChart").getContext("2d");
 
-  tempChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "Oil Temp (°C)",
-          data: [],
-          borderColor: "#ff5252",
-          tension: 0.3
-        },
-        {
-          label: "Water Temp (°C)",
-          data: [],
-          borderColor: "#29b6f6",
-          tension: 0.3
-        },
-        {
-          label: "S1",
-          data: [],
-          borderColor: "#00e676",
-          tension: 0.3
-        },
-        {
-          label: "S2",
-          data: [],
-          borderColor: "#ffeb3b",
-          tension: 0.3
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      animation: false,
-      interaction: { mode: "index", intersect: false },
-      plugins: {
-        legend: { labels: { color: "#fff" } }
+tempChart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: [],
+    datasets: [
+      {
+        label: "Oil",
+        data: [],
+        borderColor: "#ff5252",
+        tension: 0.3
       },
-      scales: {
-        x: { ticks: { color: "#aaa" } },
-        y: {
-          title: { display: true, text: "Temperature / Sensor", color: "#fff" },
-          ticks: { color: "#fff" }
+      {
+        label: "Water",
+        data: [],
+        borderColor: "#29b6f6",
+        tension: 0.3
+      },
+      {
+        label: "S1",
+        data: [],
+        borderColor: "#00e676",
+        tension: 0.3
+      },
+      {
+        label: "S2",
+        data: [],
+        borderColor: "#ffeb3b",
+        tension: 0.3
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    animation: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: {
+        labels: {
+          color: "#fff",
+          font: {
+            size: 16 // Increase legend font size here
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: "#aaa",
+          font: {
+            size: 34 // Increase x-axis label font size here
+          }
+        },
+        title: {
+          display: true,
+          text: "Time",
+          color: "#fff",
+          font: {
+            size: 46 // Increase x-axis title font size here
+          }
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: "Temperature (°C)",
+          color: "#fff",
+          font: {
+            size: 16 // Increase y-axis title font size here
+          }
+        },
+        ticks: {
+          color: "#fff",
+          font: {
+            size: 54 // Increase y-axis tick font size here
+          }
         }
       }
     }
-  });
-}
+  }
+});
+
 
 function initPressureChart() {
   const ctx = document.getElementById("pressureChart").getContext("2d");
