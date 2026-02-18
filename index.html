@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <title>ESP32 SCADA Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -28,21 +27,21 @@
   .value-box {
     background: rgba(0,229,255,0.05);
     border-radius: 8px;
-    padding: 15px 30px;
+    padding: 20px 40px;
     text-align: center;
     box-shadow: 0 0 8px rgba(0,255,255,0.15);
-    width: 150px;
+    width: 170px;
     user-select: none;
   }
 
   .value-label {
-    font-size: 14px;
+    font-size: 16px;
     color: #66ffff;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
 
   .value-number {
-    font-size: 25px;
+    font-size: 40px;  /* increased font size */
     color: #00e5ff;
     font-weight: bold;
   }
@@ -63,18 +62,18 @@
   table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
-    font-size: 14px;
+    margin-top: 10px;
+    font-size: 13px; /* compact table */
   }
 
   th {
     background: #222;
     color: #00e5ff;
-    padding: 8px;
+    padding: 6px;
   }
 
   td {
-    padding: 6px;
+    padding: 4px;
     text-align: center;
     border-bottom: 1px solid #333;
   }
@@ -135,7 +134,7 @@
 <button id="toggleTableBtn">Toggle Table</button>
 
 <!-- Data table -->
-<div class="card" id="tableContainer">
+<div class="card" id="tableContainer" style="display: none;">
   <table id="dataTable">
     <thead>
       <tr>
@@ -161,10 +160,9 @@ const REFRESH_INTERVAL = 5000;
 let tempChart;
 let pressureChart;
 
-// Initialize Temperature Chart
+// Initialize Temperature Chart (without data labels)
 function initTempChart() {
   const ctx = document.getElementById("scadaChart").getContext("2d");
-  Chart.register(ChartDataLabels);
 
   tempChart = new Chart(ctx, {
     type: "line",
@@ -182,21 +180,13 @@ function initTempChart() {
       animation: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { labels: { color: "#fff", font: { size: 16 } } },
-        datalabels: {
-          color: "#fff",
-          font: { size: 20, weight: "bold" },
-          anchor: 'end',
-          align: 'top',
-          formatter: value => value
-        }
+        legend: { labels: { color: "#fff", font: { size: 16 } } }
       },
       scales: {
         x: { ticks: { color: "#aaa", font: { size: 14 } }, title: { display: true, text: "Time", color: "#fff", font: { size: 16 } } },
         y: { ticks: { color: "#fff", font: { size: 14 } }, title: { display: true, text: "Temperature (°C)", color: "#fff", font: { size: 16 } } }
       }
-    },
-    plugins: [ChartDataLabels]
+    }
   });
 }
 
@@ -283,11 +273,6 @@ async function fetchData() {
       document.getElementById("valOilT").textContent = latest.Oil_T;
       document.getElementById("valS1").textContent = latest.S1;
       document.getElementById("valS2").textContent = latest.S2;
-    } else {
-      document.getElementById("valH2oT").textContent = "--";
-      document.getElementById("valOilT").textContent = "--";
-      document.getElementById("valS1").textContent = "--";
-      document.getElementById("valS2").textContent = "--";
     }
 
     tempChart.update();
