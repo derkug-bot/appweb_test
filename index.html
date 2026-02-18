@@ -139,8 +139,8 @@ function createGauge(ctx, color) {
         backgroundColor: [color, '#222'],
         borderWidth: 0,
         cutout: '80%',
-        rotation: 270,
-        circumference: 180,
+        rotation: Math.PI,       // 180 degrees start (bottom)
+        circumference: Math.PI,  // 180 degrees arc (half circle)
       }]
     },
     options: {
@@ -149,12 +149,7 @@ function createGauge(ctx, color) {
       plugins: {
         legend: { display: false },
         tooltip: { enabled: false },
-        annotation: {
-          annotations: {}
-        }
-      },
-      circumference: 180,
-      rotation: 270,
+      }
     },
   });
 }
