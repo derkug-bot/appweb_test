@@ -217,8 +217,8 @@ function initTempChart() {
         y: {
           title: { display: true, text: "Temperature / Sensor", color: "#fff" },
           ticks: { color: "#fff" },
-          min: GAUGE_MIN,
-          max: GAUGE_MAX
+          min: 0,
+          max: 110
         }
       }
     }
@@ -258,10 +258,10 @@ function initPressureChart() {
       scales: {
         x: { ticks: { color: "#aaa" } },
         y: {
-          title: { display: true, text: "Pressure (bar)", color: "#fff" },
+          title: { display: true, text: "Pressure (Psi)", color: "#fff" },
           ticks: { color: "#fff" },
-          min: -50,
-          max: 200
+          min: 0,
+          max: 80
         }
       }
     }
