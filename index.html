@@ -2,6 +2,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <meta charset="UTF-8">
 <title>ESP32 Dashboard</title>
 <style>
@@ -18,6 +20,10 @@
 </style>
 </head>
 <body>
+  <h2>Oil Temperature Trend</h2>
+<canvas id="oilTempChart"></canvas>
+
+  
 <h1>ESP32 Dashboard</h1>
 <table id="dataTable">
   <thead>
@@ -58,6 +64,57 @@ function getRssiClass(rssi) {
 }
 
 
+
+
+
+
+let oilTempChart;
+
+function createChart(labels, values) {
+  const ctx = document.getElementById('oilTempChart').getContext('2d');
+
+  if (oilTempChart) {
+    oilTempChart.destroy();
+  }
+
+  oilTempChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Oil Temperature',
+        data: values,
+        borderColor: 'red',
+        fill: false,
+        tension: 0.2
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          display: true
+        },
+        y: {
+          beginAtZero: false
+        }
+      }
+    }
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+  
 async function fetchData() {
   try {
     const res = await fetch(DATA_URL);
@@ -90,6 +147,16 @@ async function fetchData() {
               // <td>${row.LED}</td>      
         // <td>${row.Sheet}</td>
     });
+    const labels = [];
+const oilTemps = [];
+
+data.forEach(row => {
+  labels.push(new Date(row.Timestamp).toLocaleTimeString());
+  oilTemps.push(Number(row.Oil_T));
+});
+
+createChart(labels, oilTemps);
+
   } catch (err) {
     console.error("Error fetching data:", err);
   }
