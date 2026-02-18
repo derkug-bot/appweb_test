@@ -1,73 +1,58 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  
 <meta charset="UTF-8">
 <title>ESP32 Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
   body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
   h1 { text-align: center; }
-<canvas id="tempChart" height="100"></canvas>
 
-  
+  canvas { background: #fff; margin-bottom: 20px; }
+
   table { width: 100%; border-collapse: collapse; margin-top: 20px; }
   th, td { padding: 8px 12px; border: 1px solid #ccc; text-align: center; }
   th { background-color: #333; color: #fff; }
 
-  /* RSSI colors */
   .rssi-strong { background-color: #4caf50; color: #fff; }
   .rssi-medium { background-color: #ffeb3b; }
   .rssi-weak { background-color: #f44336; color: #fff; }
 </style>
 </head>
-<body>
-<h1>ESP32 Dashboard</h1>
-<table id="dataTable">
-  <thead>
-    <tr>
-      <th>Timestamp</th>
-      <th>Device</th>
-      <th>RSSI</th>
-      <th>A1</th>
-      <th>A2</th>
-      <th>A3</th>
-      <th>A4</th>
-      <th>Oil_T</th>
-      <th>Oil_P</th>
-      <th>H2o_T</th>
-      <th>H2o_P</th>
-      <th>S1</th>
-      <th>S2</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-      <!-- <th>LED</th> -->
-      <!-- <th>Sheet</th> -->
 
-  
+<body>
+
+<h1>ESP32 Dashboard</h1>
+
+<!-- ✅ Chart goes in BODY, not STYLE -->
+<canvas id="tempChart" height="100"></canvas>
+
+<table id="dataTable">
+<thead>
+<tr>
+<th>Timestamp</th>
+<th>Device</th>
+<th>RSSI</th>
+<th>A1</th>
+<th>A2</th>
+<th>A3</th>
+<th>A4</th>
+<th>Oil_T</th>
+<th>Oil_P</th>
+<th>H2o_T</th>
+<th>H2o_P</th>
+<th>S1</th>
+<th>S2</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
 <script>
 const DATA_URL = `https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec`;
-
-const REFRESH_INTERVAL = 5000; // 5 seconds
-
-function getRssiClass(rssi) {
-  rssi = Number(rssi); // <- force to number
-  if (rssi >= -60) return "rssi-strong";    // strong signal
-  if (rssi >= -75) return "rssi-medium";   // medium signal
-  return "rssi-weak";                       // weak signal
-}
-
-
-
-
-
-
-
-
+const REFRESH_INTERVAL = 5000;
 
 let tempChart;
 
@@ -91,68 +76,60 @@ function initChart() {
           borderColor: "blue",
           backgroundColor: "rgba(0,0,255,0.1)",
           data: [],
-          data: [],
           tension: 0.3
         }
       ]
     },
     options: {
       responsive: true,
+      animation: false,
       scales: {
-        x: {
-          title: { display: true, text: "Time" }
-        },
-        y: {
-          title: { display: true, text: "Temperature (°C)" }
-        }
+        x: { title: { display: true, text: "Time" } },
+        y: { title: { display: true, text: "Temperature (°C)" } }
       }
     }
   });
 }
 
+function getRssiClass(rssi) {
+  rssi = Number(rssi);
+  if (rssi >= -60) return "rssi-strong";
+  if (rssi >= -75) return "rssi-medium";
+  return "rssi-weak";
+}
 
-
-
-
-
-
-
-  
 async function fetchData() {
   try {
     const res = await fetch(DATA_URL);
     const data = await res.json();
+
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
 
-    // Clear old chart data
-tempChart.data.labels = [];
-tempChart.data.datasets[0].data = [];
-tempChart.data.datasets[1].data = [];
-
+    // Clear chart
+    tempChart.data.labels = [];
+    tempChart.data.datasets[0].data = [];
+    tempChart.data.datasets[1].data = [];
 
     data.forEach(row => {
-// Add chart data
-tempChart.data.labels.push(
-  new Date(row.Timestamp).toLocaleTimeString()
-);
-tempChart.data.datasets[0].data.push(row.Oil_T);
-tempChart.data.datasets[1].data.push(row.H2o_T);
 
-      
+      // Add to chart
+      tempChart.data.labels.push(
+        new Date(row.Timestamp).toLocaleTimeString()
+      );
+      tempChart.data.datasets[0].data.push(Number(row.Oil_T));
+      tempChart.data.datasets[1].data.push(Number(row.H2o_T));
+
+      // Add to table
       const tr = document.createElement("tr");
-
-      // Add RSSI class for color
-      const rssiClass = getRssiClass(row.RSSI);
-
       tr.innerHTML = `
         <td>${new Date(row.Timestamp).toLocaleString()}</td>
         <td>${row.Device}</td>
-         <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
+        <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
         <td>${row.A1}</td>
         <td>${row.A2}</td>
         <td>${row.A3}</td>
-        <td>${row.A4}</td>        
+        <td>${row.A4}</td>
         <td>${row.Oil_T}</td>
         <td>${row.Oil_P}</td>
         <td>${row.H2o_T}</td>
@@ -161,9 +138,8 @@ tempChart.data.datasets[1].data.push(row.H2o_T);
         <td>${row.S2}</td>
       `;
       tbody.appendChild(tr);
-              // <td>${row.LED}</td>      
-        // <td>${row.Sheet}</td>
     });
+
     tempChart.update();
 
   } catch (err) {
@@ -171,13 +147,10 @@ tempChart.data.datasets[1].data.push(row.H2o_T);
   }
 }
 
-// Initial fetch
 initChart();
 fetchData();
-
-
-// Auto-refresh
 setInterval(fetchData, REFRESH_INTERVAL);
 </script>
+
 </body>
 </html>
