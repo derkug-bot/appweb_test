@@ -5,8 +5,6 @@
 <title>ESP32 SCADA Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-
-  
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -21,14 +19,6 @@
     margin-bottom: 30px;
   }
 
-  .card {
-    background: #1b1b1b;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 15px rgba(0,255,255,0.2);
-    margin-bottom: 30px;
-  }
-
   .top-values {
     display: flex;
     justify-content: space-around;
@@ -36,7 +26,7 @@
   }
 
   .value-box {
-    background: #222;
+    background: rgba(0,229,255,0.05);
     border-radius: 8px;
     padding: 15px 30px;
     text-align: center;
@@ -60,6 +50,14 @@
   canvas {
     background: #0d0d0d;
     border-radius: 6px;
+  }
+
+  .card {
+    background: #1b1b1b;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,255,255,0.2);
+    margin-bottom: 30px;
   }
 
   table {
@@ -103,7 +101,7 @@
 
 <h1>⚙ ESP32 SCADA Dashboard</h1>
 
-<!-- Top values display -->
+<!-- Top numeric displays -->
 <div class="top-values">
   <div class="value-box">
     <div class="value-label">H2O Temp (°C)</div>
@@ -163,129 +161,20 @@ const REFRESH_INTERVAL = 5000;
 let tempChart;
 let pressureChart;
 
+// Initialize Temperature Chart
 function initTempChart() {
   const ctx = document.getElementById("scadaChart").getContext("2d");
+  Chart.register(ChartDataLabels);
 
-// Register the plugin globally if needed
-Chart.register(ChartDataLabels);
-
-tempChart = new Chart(ctx, {
-  type: "line",
-  data: {
-    labels: [],
-    datasets: [
-      {
-        label: "Oil",
-        data: [],
-        borderColor: "#ff5252",
-        tension: 0.3
-      },
-      {
-        label: "Water",
-        data: [],
-        borderColor: "#29b6f6",
-        tension: 0.3
-      },
-      {
-        label: "S1",
-        data: [],
-        borderColor: "#00e676",
-        tension: 0.3
-      },
-      {
-        label: "S2",
-        data: [],
-        borderColor: "#ffeb3b",
-        tension: 0.3
-      }
-    ]
-  },
-  options: {
-    responsive: true,
-    animation: false,
-    interaction: { mode: "index", intersect: false },
-    plugins: {
-      legend: {
-        labels: {
-          color: "#fff",
-          font: {
-            size: 16
-          }
-        }
-      },
-      datalabels: {
-        color: "#fff",
-        font: {
-          size: 38,  // <-- Make data values bigger here
-          weight: 'bold'
-        },
-        anchor: 'end',
-        align: 'top',
-        formatter: function(value) {
-          return value; // display the raw value
-        }
-      }
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: "#aaa",
-          font: {
-            size: 14
-          }
-        },
-        title: {
-          display: true,
-          text: "Time",
-          color: "#fff",
-          font: {
-            size: 16
-          }
-        }
-      },
-      y: {
-        title: {
-          display: true,
-          text: "Temperature (°C)",
-          color: "#fff",
-          font: {
-            size: 16
-          }
-        },
-        ticks: {
-          color: "#fff",
-          font: {
-            size: 14
-          }
-        }
-      }
-    }
-  },
-  plugins: [ChartDataLabels]
-});
-
-
-
-function initPressureChart() {
-  const ctx = document.getElementById("pressureChart").getContext("2d");
-
-  pressureChart = new Chart(ctx, {
+  tempChart = new Chart(ctx, {
     type: "line",
     data: {
       labels: [],
       datasets: [
-        {
-          label: "Oil Pressure (bar)",
-          data: [],
-          borderColor: "#ff9800",
-          tension: 0.3
-        },
-        {
-          label: "Water Pressure (bar)",
-          data: [],
-          borderColor: "#00e5ff",
-          tension: 0.3
-        }
+        { label: "Oil", data: [], borderColor: "#ff5252", tension: 0.3 },
+        { label: "Water", data: [], borderColor: "#29b6f6", tension: 0.3 },
+        { label: "S1", data: [], borderColor: "#00e676", tension: 0.3 },
+        { label: "S2", data: [], borderColor: "#ffeb3b", tension: 0.3 }
       ]
     },
     options: {
@@ -293,19 +182,45 @@ function initPressureChart() {
       animation: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { labels: { color: "#fff" } }
+        legend: { labels: { color: "#fff", font: { size: 16 } } },
+        datalabels: {
+          color: "#fff",
+          font: { size: 20, weight: "bold" },
+          anchor: 'end',
+          align: 'top',
+          formatter: value => value
+        }
       },
       scales: {
-        x: { ticks: { color: "#aaa" } },
-        y: {
-          title: { display: true, text: "Pressure (bar)", color: "#fff" },
-          ticks: { color: "#fff" }
-        }
+        x: { ticks: { color: "#aaa", font: { size: 14 } }, title: { display: true, text: "Time", color: "#fff", font: { size: 16 } } },
+        y: { ticks: { color: "#fff", font: { size: 14 } }, title: { display: true, text: "Temperature (°C)", color: "#fff", font: { size: 16 } } }
       }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+// Initialize Pressure Chart
+function initPressureChart() {
+  const ctx = document.getElementById("pressureChart").getContext("2d");
+
+  pressureChart = new Chart(ctx, {
+    type: "line",
+    data: { labels: [], datasets: [
+      { label: "Oil Pressure (bar)", data: [], borderColor: "#ff9800", tension: 0.3 },
+      { label: "Water Pressure (bar)", data: [], borderColor: "#00e5ff", tension: 0.3 }
+    ]},
+    options: {
+      responsive: true,
+      animation: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: { legend: { labels: { color: "#fff" } } },
+      scales: { x: { ticks: { color: "#aaa" } }, y: { ticks: { color: "#fff" }, title: { display: true, text: "Pressure (bar)", color: "#fff" } } }
     }
   });
 }
 
+// RSSI Color Helper
 function getRssiClass(rssi) {
   rssi = Number(rssi);
   if (rssi >= -60) return "rssi-strong";
@@ -313,6 +228,7 @@ function getRssiClass(rssi) {
   return "rssi-weak";
 }
 
+// Fetch Data
 async function fetchData() {
   try {
     const res = await fetch(DATA_URL);
@@ -321,35 +237,32 @@ async function fetchData() {
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
 
-    // Clear charts
     tempChart.data.labels = [];
     pressureChart.data.labels = [];
-
     tempChart.data.datasets.forEach(ds => ds.data = []);
     pressureChart.data.datasets.forEach(ds => ds.data = []);
 
-    // Variables for top values display - last row data
     let latest = null;
 
     data.forEach(row => {
       const time = new Date(row.Timestamp).toLocaleTimeString();
 
-      // --- Temperature Chart ---
+      // Temperature chart
       tempChart.data.labels.push(time);
       tempChart.data.datasets[0].data.push(Number(row.Oil_T));
       tempChart.data.datasets[1].data.push(Number(row.H2o_T));
       tempChart.data.datasets[2].data.push(Number(row.S1));
       tempChart.data.datasets[3].data.push(Number(row.S2));
 
-      // --- Pressure Chart ---
+      // Pressure chart
       pressureChart.data.labels.push(time);
       pressureChart.data.datasets[0].data.push(Number(row.Oil_P));
       pressureChart.data.datasets[1].data.push(Number(row.H2o_P));
 
-      // Table row
+      // Table
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${new Date(row.Timestamp).toLocaleTimeString()}</td>
+        <td>${time}</td>
         <td>${row.Device}</td>
         <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
         <td>${row.Oil_T}</td>
@@ -364,7 +277,7 @@ async function fetchData() {
       latest = row;
     });
 
-    // Update top values with latest data or show -- if none
+    // Update top values
     if (latest) {
       document.getElementById("valH2oT").textContent = latest.H2o_T;
       document.getElementById("valOilT").textContent = latest.Oil_T;
@@ -379,27 +292,22 @@ async function fetchData() {
 
     tempChart.update();
     pressureChart.update();
+
   } catch (err) {
     console.error("Error fetching data:", err);
   }
 }
 
+// Initialize everything
 initTempChart();
 initPressureChart();
-
 fetchData();
 setInterval(fetchData, REFRESH_INTERVAL);
 
-// Table toggle logic
-const toggleBtn = document.getElementById("toggleTableBtn");
-const tableContainer = document.getElementById("tableContainer");
-
-toggleBtn.addEventListener("click", () => {
-  if (tableContainer.style.display === "none") {
-    tableContainer.style.display = "block";
-  } else {
-    tableContainer.style.display = "none";
-  }
+// Table toggle
+document.getElementById("toggleTableBtn").addEventListener("click", () => {
+  const tableContainer = document.getElementById("tableContainer");
+  tableContainer.style.display = tableContainer.style.display === "none" ? "block" : "none";
 });
 </script>
 
