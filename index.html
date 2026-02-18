@@ -2,11 +2,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  
 <meta charset="UTF-8">
 <title>ESP32 Dashboard</title>
 <style>
   body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
   h1 { text-align: center; }
+<canvas id="tempChart" height="100"></canvas>
+
+  
   table { width: 100%; border-collapse: collapse; margin-top: 20px; }
   th, td { padding: 8px 12px; border: 1px solid #ccc; text-align: center; }
   th { background-color: #333; color: #fff; }
@@ -44,9 +50,7 @@
 
   
 <script>
-// const API_KEY = "MY_SUPER_SECRET_123"; // same as in your Apps Script
-// const DATA_URL = `https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec?key=${API_KEY}`;
-  const DATA_URL = `https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec`;
+const DATA_URL = `https://script.google.com/macros/s/AKfycbycv7bVLQaIvbtOLZFNR-8bZ3oxm5AsqqblbtuwUJQf33r2mlcnsh-ChABJm5_Ed3XIog/exec`;
 
 const REFRESH_INTERVAL = 5000; // 5 seconds
 
@@ -58,6 +62,62 @@ function getRssiClass(rssi) {
 }
 
 
+
+
+
+
+
+
+
+let tempChart;
+
+function initChart() {
+  const ctx = document.getElementById("tempChart").getContext("2d");
+
+  tempChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: "Oil Temperature",
+          borderColor: "red",
+          backgroundColor: "rgba(255,0,0,0.1)",
+          data: [],
+          tension: 0.3
+        },
+        {
+          label: "Water Temperature",
+          borderColor: "blue",
+          backgroundColor: "rgba(0,0,255,0.1)",
+          data: [],
+          data: [],
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          title: { display: true, text: "Time" }
+        },
+        y: {
+          title: { display: true, text: "Temperature (°C)" }
+        }
+      }
+    }
+  });
+}
+
+
+
+
+
+
+
+
+  
 async function fetchData() {
   try {
     const res = await fetch(DATA_URL);
@@ -65,7 +125,21 @@ async function fetchData() {
     const tbody = document.querySelector("#dataTable tbody");
     tbody.innerHTML = "";
 
+    // Clear old chart data
+tempChart.data.labels = [];
+tempChart.data.datasets[0].data = [];
+tempChart.data.datasets[1].data = [];
+
+
     data.forEach(row => {
+// Add chart data
+tempChart.data.labels.push(
+  new Date(row.Timestamp).toLocaleTimeString()
+);
+tempChart.data.datasets[0].data.push(row.Oil_T);
+tempChart.data.datasets[1].data.push(row.H2o_T);
+
+      
       const tr = document.createElement("tr");
 
       // Add RSSI class for color
@@ -90,13 +164,17 @@ async function fetchData() {
               // <td>${row.LED}</td>      
         // <td>${row.Sheet}</td>
     });
+    tempChart.update();
+
   } catch (err) {
     console.error("Error fetching data:", err);
   }
 }
 
 // Initial fetch
+initChart();
 fetchData();
+
 
 // Auto-refresh
 setInterval(fetchData, REFRESH_INTERVAL);
