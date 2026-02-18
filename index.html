@@ -164,8 +164,54 @@ let pressureChart;
 function initTempChart() {
   const ctx = document.getElementById("scadaChart").getContext("2d");
 
-
-
+  tempChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: "Oil Temp (°C)",
+          data: [],
+          borderColor: "#ff5252",
+          tension: 0.3
+        },
+        {
+          label: "Water Temp (°C)",
+          data: [],
+          borderColor: "#29b6f6",
+          tension: 0.3
+        },
+        {
+          label: "S1",
+          data: [],
+          borderColor: "#00e676",
+          tension: 0.3
+        },
+        {
+          label: "S2",
+          data: [],
+          borderColor: "#ffeb3b",
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      animation: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { labels: { color: "#fff" } }
+      },
+      scales: {
+        x: { ticks: { color: "#aaa" } },
+        y: {
+          title: { display: true, text: "Temperature / Sensor", color: "#fff" },
+          ticks: { color: "#fff" }
+        }
+      }
+    }
+  });
+}
 
 function initPressureChart() {
   const ctx = document.getElementById("pressureChart").getContext("2d");
@@ -176,13 +222,13 @@ function initPressureChart() {
       labels: [],
       datasets: [
         {
-          label: "Oil",
+          label: "Oil Pressure (bar)",
           data: [],
           borderColor: "#ff9800",
           tension: 0.3
         },
         {
-          label: "Water",
+          label: "Water Pressure (bar)",
           data: [],
           borderColor: "#00e5ff",
           tension: 0.3
@@ -199,7 +245,7 @@ function initPressureChart() {
       scales: {
         x: { ticks: { color: "#aaa" } },
         y: {
-          title: { display: true, text: "Pressure (psi)", color: "#fff" },
+          title: { display: true, text: "Pressure (bar)", color: "#fff" },
           ticks: { color: "#fff" }
         }
       }
