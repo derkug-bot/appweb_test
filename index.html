@@ -24,13 +24,19 @@
     <tr>
       <th>Timestamp</th>
       <th>Device</th>
+            <th>RSSI</th>
       <th>A1</th>
       <th>A2</th>
       <th>A3</th>
-      <th>LED</th>
-      <th>RSSI</th>
-      <th>Sheet</th>
-      <th>Oil_P</th>
+      <th>A4</th>
+      <!-- <th>LED</th> -->
+      <!-- <th>Sheet</th> -->
+      <th>Oil_T</th>
+            <th>Oil_P</th>
+            <th>H2o_T</th>
+            <th>H2o_P</th>
+            <th>S1</th>
+            <th>S2</th>
     </tr>
   </thead>
   <tbody></tbody>
@@ -67,13 +73,19 @@ async function fetchData() {
       tr.innerHTML = `
         <td>${new Date(row.Timestamp).toLocaleString()}</td>
         <td>${row.Device}</td>
+         <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
         <td>${row.A1}</td>
         <td>${row.A2}</td>
         <td>${row.A3}</td>
-        <td>${row.LED}</td>
-          <td class="${getRssiClass(row.RSSI)}">${row.RSSI}</td>
-        <td>${row.Sheet}</td>
-        <td>${row.Oil_P}</td>
+        // <td>${row.LED}</td>
+         
+        // <td>${row.Sheet}</td>
+        <td>${row.Oil_T}</td>
+                <td>${row.Oil_P}</td>
+                        <td>${row.H2o_T}</td>
+                                <td>${row.H2o_p}</td>
+                                        <td>${row.S1}</td>
+                                                <td>${row.S2}</td>
       `;
       tbody.appendChild(tr);
     });
