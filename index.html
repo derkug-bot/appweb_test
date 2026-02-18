@@ -4,7 +4,9 @@
 <meta charset="UTF-8" />
 <title>ESP32 SCADA Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
+  
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -164,6 +166,9 @@ let pressureChart;
 function initTempChart() {
   const ctx = document.getElementById("scadaChart").getContext("2d");
 
+// Register the plugin globally if needed
+Chart.register(ChartDataLabels);
+
 tempChart = new Chart(ctx, {
   type: "line",
   data: {
@@ -204,8 +209,20 @@ tempChart = new Chart(ctx, {
         labels: {
           color: "#fff",
           font: {
-            size: 26 // Increase legend font size here
+            size: 16
           }
+        }
+      },
+      datalabels: {
+        color: "#fff",
+        font: {
+          size: 38,  // <-- Make data values bigger here
+          weight: 'bold'
+        },
+        anchor: 'end',
+        align: 'top',
+        formatter: function(value) {
+          return value; // display the raw value
         }
       }
     },
@@ -214,7 +231,7 @@ tempChart = new Chart(ctx, {
         ticks: {
           color: "#aaa",
           font: {
-            size: 16 // Increase x-axis label font size here
+            size: 14
           }
         },
         title: {
@@ -222,7 +239,7 @@ tempChart = new Chart(ctx, {
           text: "Time",
           color: "#fff",
           font: {
-            size: 14 // Increase x-axis title font size here
+            size: 16
           }
         }
       },
@@ -232,19 +249,21 @@ tempChart = new Chart(ctx, {
           text: "Temperature (°C)",
           color: "#fff",
           font: {
-            size: 16 // Increase y-axis title font size here
+            size: 16
           }
         },
         ticks: {
           color: "#fff",
           font: {
-            size: 14 // Increase y-axis tick font size here
+            size: 14
           }
         }
       }
     }
-  }
+  },
+  plugins: [ChartDataLabels]
 });
+
 
 
 function initPressureChart() {
