@@ -104,7 +104,7 @@
 <!-- Top numeric displays -->
 <div class="top-values">
   <div class="value-box">
-    <div class="value-label">H2O Pressure bar</div>
+    <div class="value-label">H2O bar</div>
     <div id="valH2oP" class="value-number">--</div>
   </div>
   <div class="value-box">
@@ -275,6 +275,7 @@ async function fetchData() {
     // Update top values
     if (latest) {
       document.getElementById("valH2oT").textContent = latest.H2o_T;
+      document.getElementById("valH2oP").textContent = latest.H2o_P;
       document.getElementById("valOilT").textContent = latest.Oil_T;
       document.getElementById("valS1").textContent = latest.S1;
       document.getElementById("valS2").textContent = latest.S2;
