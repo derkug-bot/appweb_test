@@ -127,12 +127,12 @@
 
 <!-- Temperature chart -->
 <div class="card">
-  <canvas id="scadaChart" height="120"></canvas>
+  <canvas id="scadaChart" height="180"></canvas>
 </div>
 
 <!-- Pressure chart -->
 <div class="card">
-  <canvas id="pressureChart" height="60"></canvas>
+  <canvas id="pressureChart" height="120"></canvas>
 </div>
 
 <!-- Toggle button for table -->
@@ -189,7 +189,9 @@ function initTempChart() {
       },
       scales: {
         x: { ticks: { color: "#aaa", font: { size: 14 } }, title: { display: true, text: "Time", color: "#fff", font: { size: 16 } } },
-        y: { ticks: { color: "#fff", font: { size: 14 } }, title: { display: true, text: "Temperature (°C)", color: "#fff", font: { size: 16 } } }
+        y: {min: 0,          // lower limit
+            max: 120,        // optional upper limit 
+            ticks: { color: "#fff", font: { size: 14 } }, title: { display: true, text: "Temperature (°C)", color: "#fff", font: { size: 16 } } }
       }
     }
   });
@@ -252,7 +254,7 @@ async function fetchData() {
       // Pressure chart
       pressureChart.data.labels.push(time);
       pressureChart.data.datasets[0].data.push(Number(row.Oil_P));
-      pressureChart.data.datasets[1].data.push(Number(row.H2o_P));
+      pressureChart.data.datasets[1].data.push(Number(row.H2o_P*5));
 
       // Table
       const tr = document.createElement("tr");
