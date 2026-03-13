@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Environmental SCADA</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#111;
+color:#eee;
+padding:20px;
+}
+
+h1{
+text-align:center;
+color:#00e5ff;
+margin-bottom:25px;
+}
+
+.top-values{
+display:flex;
+justify-content:space-around;
+margin-bottom:20px;
+}
+
+.value-box{
+background:rgba(0,229,255,0.05);
+border-radius:8px;
+padding:15px 25px;
+text-align:center;
+box-shadow:0 0 8px rgba(0,255,255,0.15);
+width:120px;
+}
+
+.value-label{
+font-size:14px;
+color:#66ffff;
+}
+
+.value-number{
+font-size:48px;
+color:#00e5ff;
+font-weight:bold;
+}
+
+.card{
+background:#1b1b1b;
+padding:20px;
+border-radius:8px;
+box-shadow:0 0 15px rgba(0,255,255,0.2);
+margin-bottom:25px;
+}
+
+canvas{
+background:#0d0d0d;
+border-radius:6px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🌡 Environmental SCADA</h1>
+
+<div class="top-values">
+
+<div class="value-box">
+<div class="value-label">Temp °C</div>
+<div id="valTemp" class="value-number">--</div>
+</div>
+
+<div class="value-box">
+<div class="value-label">Humidity %</div>
+<div id="valHum" class="value-number">--</div>
+</div>
+
+<div class="value-box">
+<div class="value-label">Pressure hPa</div>
+<div id="valPress" class="value-number">--</div>
+</div>
+
+<div class="value-box">
+<div class="value-label">CO₂ ppm</div>
+<div id="valCO2" class="value-number">--</div>
+</div>
+
+</div>
+
+<div class="card">
+<canvas id="tempChart" height="160"></canvas>
+</div>
+
+<div class="card">
+<canvas id="humPressChart" height="140"></canvas>
+</div>
+
+<div class="card">
+<canvas id="gasChart" height="140"></canvas>
+</div>
+
+<script>
+
+const DATA_URL="YOUR_GOOGLE_SCRIPT_URL";
+const REFRESH_INTERVAL=5000;
+
+let tempChart;
+let humPressChart;
+let gasChart;
+
+function initCharts(){
+
+// Temperature
+tempChart=new Chart(
+document.getElementById("tempChart"),
+{
+type:"line",
+data:{
+labels:[],
+datasets:[
+{label:"AHT Temp",data:[],borderColor:"#ff5252",tension:0.3},
+{label:"BMP Temp",data:[],borderColor:"#ff9800",tension:0.3},
+{label:"Temp",data:[],borderColor:"#29b6f6",tension:0.3}
+]
+},
+options:{
+responsive:true,
+animation:false,
+plugins:{legend:{labels:{color:"#fff"}}},
+scales:{
+x:{ticks:{color:"#aaa"}},
+y:{title:{display:true,text:"Temperature °C",color:"#fff"},ticks:{color:"#fff"}}
+}
+}
+});
+
+
+// Humidity / Pressure
+humPressChart=new Chart(
+document.getElementById("humPressChart"),
+{
+type:"line",
+data:{
+labels:[],
+datasets:[
+{label:"AHT Humidity %",data:[],borderColor:"#00e676",tension:0.3},
+{label:"Humidity %",data:[],borderColor:"#00bcd4",tension:0.3},
+{label:"Pressure hPa",data:[],borderColor:"#ffc107",tension:0.3}
+]
+},
+options:{
+responsive:true,
+animation:false,
+plugins:{legend:{labels:{color:"#fff"}}},
+scales:{
+x:{ticks:{color:"#aaa"}},
+y:{ticks:{color:"#fff"}}
+}
+}
+});
+
+
+// Gas chart
+gasChart=new Chart(
+document.getElementById("gasChart"),
+{
+type:"line",
+data:{
+labels:[],
+datasets:[
+{label:"TVOC",data:[],borderColor:"#9c27b0",tension:0.3},
+{label:"eCO2",data:[],borderColor:"#ff4081",tension:0.3},
+{label:"CO2",data:[],borderColor:"#ffffff",tension:0.3}
+]
+},
+options:{
+responsive:true,
+animation:false,
+plugins:{legend:{labels:{color:"#fff"}}},
+scales:{
+x:{ticks:{color:"#aaa"}},
+y:{title:{display:true,text:"ppm",color:"#fff"},ticks:{color:"#fff"}}
+}
+}
+});
+
+}
+
+async function fetchData(){
+
+try{
+
+const res=await fetch(DATA_URL);
+const data=await res.json();
+
+tempChart.data.labels=[];
+humPressChart.data.labels=[];
+gasChart.data.labels=[];
+
+tempChart.data.datasets.forEach(d=>d.data=[]);
+humPressChart.data.datasets.forEach(d=>d.data=[]);
+gasChart.data.datasets.forEach(d=>d.data=[]);
+
+let latest=null;
+
+data.forEach(row=>{
+
+const time=new Date(row.Timestamp).toLocaleTimeString();
+
+// labels
+tempChart.data.labels.push(time);
+humPressChart.data.labels.push(time);
+gasChart.data.labels.push(time);
+
+// temperatures
+tempChart.data.datasets[0].data.push(Number(row.ahtTemp));
+tempChart.data.datasets[1].data.push(Number(row.bmpTemp));
+tempChart.data.datasets[2].data.push(Number(row.tem));
+
+// humidity + pressure
+humPressChart.data.datasets[0].data.push(Number(row.ahtHum));
+humPressChart.data.datasets[1].data.push(Number(row.hum));
+humPressChart.data.datasets[2].data.push(Number(row.bmpPress));
+
+// gases
+gasChart.data.datasets[0].data.push(Number(row.TVOC));
+gasChart.data.datasets[1].data.push(Number(row.ECO2));
+gasChart.data.datasets[2].data.push(Number(row.co2));
+
+latest=row;
+
+});
+
+// update top values
+
+if(latest){
+
+document.getElementById("valTemp").textContent=latest.tem;
+document.getElementById("valHum").textContent=latest.hum;
+document.getElementById("valPress").textContent=latest.bmpPress;
+document.getElementById("valCO2").textContent=latest.co2;
+
+}
+
+tempChart.update();
+humPressChart.update();
+gasChart.update();
+
+}catch(err){
+
+console.error("Fetch error:",err);
+
+}
+
+}
+
+initCharts();
+fetchData();
+setInterval(fetchData,REFRESH_INTERVAL);
+
+</script>
+
+</body>
+</html>
